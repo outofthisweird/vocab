@@ -17,15 +17,13 @@ import {
 import { SLOW_PLAYBACK_RATE_MULTIPLIER, speakGerman } from "../lib/speech";
 import type {
   AppSettingsRecord,
+  LevelFilter,
   StudyState,
   TestMode,
   TestResult,
   TestSession,
   Vocab,
-  VocabLevel,
 } from "../types";
-
-type LevelFilter = VocabLevel | "A1+A2";
 
 type Question = {
   vocab: Vocab;
@@ -313,9 +311,14 @@ export function TestPage() {
                   setLevelFilter(event.target.value as LevelFilter)
                 }
               >
+                <option value="all">All</option>
                 <option value="A1+A2">A1+A2</option>
                 <option value="A1">A1</option>
                 <option value="A2">A2</option>
+                <option value="B1">B1</option>
+                <option value="B2">B2</option>
+                <option value="C1">C1</option>
+                <option value="C2">C2</option>
               </select>
             </label>
             <button className="primary-button" onClick={handleStartSession}>
@@ -458,8 +461,8 @@ function selectVocabsForMode(
   const now = Date.now();
   const eligibleVocabs = vocabs.filter((vocab) => {
     const state = studyStates[vocab.id];
-    const matchesLevel = levelFilter === "A1+A2" || vocab.level === levelFilter;
-    const matchesMode = mode !== "article" || Boolean(vocab.article);
+    const matchesLevel = matchesLevelFilter(vocab, levelFilter);
+    const matchesMode = canUseVocabForMode(vocab, mode);
 
     return matchesLevel && matchesMode && !state?.isIgnored;
   });
@@ -509,6 +512,27 @@ function selectVocabsForMode(
       );
     })
     .slice(0, limit);
+}
+
+function matchesLevelFilter(vocab: Vocab, levelFilter: LevelFilter) {
+  return (
+    levelFilter === "all" ||
+    (levelFilter === "A1+A2" &&
+      (vocab.level === "A1" || vocab.level === "A2")) ||
+    vocab.level === levelFilter
+  );
+}
+
+function canUseVocabForMode(vocab: Vocab, mode: TestMode) {
+  if (mode === "article") {
+    return Boolean(vocab.article);
+  }
+
+  if (mode === "listening-spelling") {
+    return true;
+  }
+
+  return vocab.translationStatus !== "needs-review";
 }
 
 function createQuestion(vocab: Vocab, mode: TestMode, index: number): Question {

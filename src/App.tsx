@@ -8,7 +8,7 @@ export default function App() {
       <div className="app-shell">
         <header className="app-header">
           <div>
-            <p className="eyebrow">Goethe A1/A2</p>
+            <p className="eyebrow">Goethe A-series</p>
             <h1>GerGer</h1>
           </div>
           <nav aria-label="Primary navigation">

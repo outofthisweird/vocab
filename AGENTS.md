@@ -1,6 +1,6 @@
 # Project Guidelines
 
-This project is a local-first German vocabulary learning web app based on Goethe A1/A2 Wortliste.
+This project is a local-first German vocabulary learning web app based on Goethe vocabulary lists.
 
 ## Core principle
 Prioritize the learning loop over visual polish.
@@ -21,8 +21,9 @@ Use Vite, React, TypeScript, IndexedDB, and Dexie.js.
 Do not add a backend, account system, cloud sync, or cloud TTS.
 
 ## MVP scope
-Include only A1/A2 vocabulary.
-Do not implement B1+, AI tutor, pronunciation scoring, social features, or advanced analytics.
+Complete the A-series vocabulary first, meaning A1 and A2.
+After the A-series data is complete, B1+ vocabulary may be added in level order.
+Do not implement an AI tutor, pronunciation scoring, social features, or advanced analytics.
 
 ## Data model
 Follow the Vocab, StudyState, TestSession, and AppSettings structures described in docs/PROJECT_SPEC.md.

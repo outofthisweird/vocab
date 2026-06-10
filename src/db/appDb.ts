@@ -1,5 +1,5 @@
 import Dexie, { type Table } from "dexie";
-import { sampleVocabulary } from "../data/sampleVocabulary";
+import { aSeriesVocabulary } from "../data/aSeriesVocabulary";
 import type {
   AppSettingsRecord,
   DatasetMeta,
@@ -9,7 +9,7 @@ import type {
   Vocab,
 } from "../types";
 
-const SAMPLE_DATASET_ID = "sample-vocabulary-v1";
+const A_SERIES_DATASET_ID = "goethe-a-series-v1";
 
 export const DEFAULT_SETTINGS: AppSettingsRecord = {
   id: "default",
@@ -59,33 +59,35 @@ class GerGerDb extends Dexie {
 export const db = new GerGerDb();
 
 export async function seedAppData() {
-  await seedSampleVocabulary();
+  await seedASeriesVocabulary();
   await seedDefaultSettings();
 }
 
-export async function seedSampleVocabulary() {
+export async function seedASeriesVocabulary() {
   await db.transaction(
     "rw",
     db.vocabs,
     db.studyStates,
     db.datasetMeta,
     async () => {
-      const installedDataset = await db.datasetMeta.get(SAMPLE_DATASET_ID);
+      const installedDataset = await db.datasetMeta.get(A_SERIES_DATASET_ID);
 
       if (installedDataset) {
         return;
       }
 
-      const existingIds = new Set(
-        (await db.vocabs.toCollection().primaryKeys()).map(String),
-      );
+      const existingVocabs = await db.vocabs.toArray();
+      const existingIds = new Set(existingVocabs.map((vocab) => vocab.id));
+      const existingVocabKeys = new Set(existingVocabs.map(createVocabKey));
       const existingStudyStateIds = new Set(
         (await db.studyStates.toCollection().primaryKeys()).map(String),
       );
-      const missingVocabs = sampleVocabulary.filter(
-        (vocab) => !existingIds.has(vocab.id),
+      const missingVocabs = aSeriesVocabulary.filter(
+        (vocab) =>
+          !existingIds.has(vocab.id) &&
+          !existingVocabKeys.has(createVocabKey(vocab)),
       );
-      const missingStudyStates = sampleVocabulary
+      const missingStudyStates = missingVocabs
         .filter((vocab) => !existingStudyStateIds.has(vocab.id))
         .map((vocab) => createInitialStudyState(vocab.id));
 
@@ -98,10 +100,10 @@ export async function seedSampleVocabulary() {
       }
 
       await db.datasetMeta.put({
-        id: SAMPLE_DATASET_ID,
-        name: "Phase 1 sample vocabulary",
+        id: A_SERIES_DATASET_ID,
+        name: "Goethe A-series vocabulary seed",
         version: "1.0.0",
-        vocabCount: sampleVocabulary.length,
+        vocabCount: aSeriesVocabulary.length,
         installedAt: Date.now(),
         updatedAt: Date.now(),
       });
@@ -134,4 +136,21 @@ export function createInitialStudyState(vocabId: string): StudyState {
     isFavorite: false,
     isIgnored: false,
   };
+}
+
+function createVocabKey(vocab: Pick<Vocab, "level" | "source" | "lemma">) {
+  return `${vocab.level}:${vocab.source}:${slugGerman(vocab.lemma)}`;
+}
+
+function slugGerman(value: string) {
+  return (
+    value
+      .toLocaleLowerCase("de-DE")
+      .replace(/ä/gu, "ae")
+      .replace(/ö/gu, "oe")
+      .replace(/ü/gu, "ue")
+      .replace(/ß/gu, "ss")
+      .replace(/[^a-z0-9]+/gu, "-")
+      .replace(/^-|-$/gu, "") || "entry"
+  );
 }

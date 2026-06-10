@@ -1,6 +1,15 @@
-export type VocabLevel = "A1" | "A2";
+export type VocabLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 
-export type VocabSource = "goethe-a1" | "goethe-a2" | "manual";
+export type VocabSource =
+  | "goethe-a1"
+  | "goethe-a2"
+  | "goethe-b1"
+  | "goethe-b2"
+  | "goethe-c1"
+  | "goethe-c2"
+  | "manual";
+
+export type LevelFilter = VocabLevel | "A1+A2" | "all";
 
 export type PartOfSpeech =
   | "noun"
@@ -84,7 +93,7 @@ export type TestResult = {
 export type TestSession = {
   id: string;
   mode: TestMode;
-  levelFilter?: VocabLevel | "A1+A2";
+  levelFilter?: LevelFilter;
   vocabIds: string[];
   startedAt: number;
   finishedAt?: number;
@@ -92,7 +101,7 @@ export type TestSession = {
 };
 
 export type AppSettings = {
-  defaultLevel: VocabLevel | "A1+A2";
+  defaultLevel: LevelFilter;
   dailyNewWordCount: number;
   dailyReviewCount: number;
   tts: {

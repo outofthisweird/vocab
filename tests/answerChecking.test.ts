@@ -5,7 +5,7 @@ import {
   normalizeGermanAnswer,
   normalizeMeaningAnswer,
 } from "../src/lib/answerChecking.ts";
-import { sampleVocabulary } from "../src/data/sampleVocabulary.ts";
+import { aSeriesVocabulary } from "../src/data/aSeriesVocabulary.ts";
 
 const relaxedOptions = {
   strictUmlaut: false,
@@ -29,14 +29,14 @@ test("normalizes Korean punctuation and spacing", () => {
 });
 
 test("accepts split Korean gloss answers", () => {
-  const street = sampleVocabulary.find((vocab) => vocab.lemma === "Straße")!;
+  const street = aSeriesVocabulary.find((vocab) => vocab.lemma === "Straße")!;
 
   assert.equal(checkAnswer(street, "meaning", "도로", relaxedOptions).isCorrect, true);
   assert.equal(checkAnswer(street, "meaning", "거리", relaxedOptions).isCorrect, true);
 });
 
 test("allows article omission when the setting is enabled", () => {
-  const apple = sampleVocabulary.find((vocab) => vocab.lemma === "Apfel")!;
+  const apple = aSeriesVocabulary.find((vocab) => vocab.lemma === "Apfel")!;
 
   assert.equal(checkAnswer(apple, "spelling", "Apfel", relaxedOptions).isCorrect, true);
   assert.equal(
@@ -49,7 +49,7 @@ test("allows article omission when the setting is enabled", () => {
 });
 
 test("accepts German umlaut transliteration when strict umlaut is disabled", () => {
-  const munich = sampleVocabulary.find((vocab) => vocab.lemma === "München")!;
+  const munich = aSeriesVocabulary.find((vocab) => vocab.lemma === "München")!;
 
   assert.equal(checkAnswer(munich, "spelling", "Muenchen", relaxedOptions).isCorrect, true);
   assert.equal(

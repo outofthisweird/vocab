@@ -1,10 +1,11 @@
 # GerGer Development Log
 
-Last updated: 2026-06-11 02:31 KST
+Last updated: 2026-06-11 02:56 KST
 
 ## Project Summary
 
-GerGer is a local-first German vocabulary learning web app for Goethe A1/A2 vocabulary.
+GerGer is a local-first German vocabulary learning web app for Goethe vocabulary lists.
+The current data priority is to complete A-series vocabulary first, then add B1+ vocabulary in level order.
 
 Current stack:
 - Vite
@@ -21,14 +22,18 @@ Completed from the project phase order:
 1. Local data storage
    - Dexie database is defined in `src/db/appDb.ts`.
    - Tables exist for `vocabs`, `studyStates`, `testSessions`, `settings`, `datasetMeta`, and `importLogs`.
-   - Sample A1/A2 vocabulary is seeded from `src/data/sampleVocabulary.ts`.
+   - A-series vocabulary is seeded from `src/data/aSeriesVocabulary.ts`.
+   - The seed currently contains 1,852 A1/A2 entries:
+     - The original 20 curated sample entries keep their Korean glosses and examples.
+     - Generated Goethe A1/A2 headword entries use `koreanGloss: "번역 필요"` and `translationStatus: "needs-review"` until translated/reviewed.
    - Default app settings are seeded and loaded through `seedAppData()`, `seedDefaultSettings()`, and `getAppSettings()`.
 
 2. Vocabulary list and search
    - `src/pages/VocabularyPage.tsx` lists stored vocabulary from IndexedDB.
    - Search works across German display text, lemma, Korean glosses, examples, and tags.
-   - Level filter supports `A1`, `A2`, and `A1+A2`.
+   - Level filter supports `All`, `A1+A2`, `A1`, `A2`, `B1`, `B2`, `C1`, and `C2`.
    - Part-of-speech filter supports noun, verb, adjective, adverb, phrase, and other.
+   - Rows show when a generated entry still needs translation.
    - Each row shows level, part of speech, study count, and Leitner-style box.
 
 3. German pronunciation with Web Speech API
@@ -71,32 +76,41 @@ Completed from the project phase order:
 
 Not completed yet:
 - Import/export
-- Full Goethe A1/A2 dataset import pipeline
+- Korean translation/review pass for generated A1/A2 entries
+- Committed Goethe PDF import pipeline
+- B1+ dataset expansion after A-series translation/review
 - UI polish beyond functional layout
 - Settings screen for changing TTS/test preferences
 
 ## Files Added Or Changed
 
 Added:
+- `src/data/aSeriesVocabulary.ts`
 - `src/pages/TestPage.tsx`
 - `src/lib/answerChecking.ts`
 - `src/lib/reviewScheduling.ts`
 - `src/lib/speech.ts`
+- `tests/aSeriesVocabulary.test.ts`
 - `tests/answerChecking.test.ts`
 - `tests/reviewScheduling.test.ts`
 - `tests/speech.test.ts`
 
 Changed:
 - `AGENTS.md`
+- `src/types.ts`
 - `src/db/appDb.ts`
 - `src/pages/VocabularyPage.tsx`
+- `src/pages/TestPage.tsx`
 - `src/routes/AppRoutes.tsx`
 - `src/App.tsx`
 - `src/App.css`
 - `package.json`
+- `tests/answerChecking.test.ts`
+- `tests/speech.test.ts`
 
 Recent documentation update:
 - Added a project instruction that every development session should end by committing meaningful completed changes and pushing the current branch to GitHub.
+- Updated project scope so B1+ vocabulary is allowed after the A-series data is completed.
 
 ## Verification Performed
 
@@ -108,25 +122,18 @@ node_modules/.bin/tsc -b
 node_modules/.bin/vite build
 ```
 
-Documentation-only change on 2026-06-11:
-- Updated `AGENTS.md` with the end-of-session commit and push rule.
-- App tests were not rerun because no application code changed.
-
 Browser verification performed at:
 
 ```text
-http://127.0.0.1:5173/
+http://127.0.0.1:5175/
 ```
 
 Confirmed in the browser:
-- Vocabulary list loads from IndexedDB.
+- Vocabulary list loads 1,852 A-series words from IndexedDB.
 - Vocabulary rows show normal and 0.5x pronunciation controls.
-- Search filter works.
-- Test page starts a session.
-- Answer submission saves a result.
-- After a result is shown, Enter advances to the next test question.
-- Listening mode shows both `Play` and `0.5x` controls.
-- `StudyState` persists after refresh.
+- B1/B2/C1/C2 filter options are visible for future expansion.
+- Generated entries marked `needs-review` show `translation needed`.
+- The 1,852-word count persists after refresh.
 - Browser console had no warnings or errors during the final check.
 
 ## Environment Notes
@@ -141,14 +148,15 @@ node_modules/.bin/vite build
 node_modules/.bin/vite --host 127.0.0.1
 ```
 
-- Starting the Vite dev server required elevated approval because the sandbox blocked binding to `127.0.0.1:5173`.
+- Starting the Vite dev server required elevated approval because the sandbox blocked binding to `127.0.0.1`.
 
 ## Current Dev Server
 
-The local dev server was started successfully at:
+No dev server is intentionally left running.
+The final browser verification used:
 
 ```text
-http://127.0.0.1:5173/
+http://127.0.0.1:5175/
 ```
 
 If a future session starts fresh, check whether a server is already running before starting another one.
@@ -166,16 +174,21 @@ Continue from the next uncompleted project phase:
    - Let the user change default level, daily counts, TTS rate, repeat count, strict umlaut/case, and article omission.
    - Persist changes to the `settings` table.
 
-3. Dataset expansion
-   - Add or import a fuller A1/A2 Goethe vocabulary dataset.
-   - Keep B1+ out of scope.
+3. A-series translation/review
+   - Fill Korean glosses for generated `needs-review` A1/A2 entries.
+   - Review extracted display forms and part-of-speech guesses where they look rough.
+   - Keep generated entries out of meaning/spelling tests until their translations are reviewed.
 
-4. UI polish
+4. Dataset expansion
+   - Add B1+ vocabulary only after the A-series translation/review pass is usable.
+
+5. UI polish
    - Improve spacing, empty states, and mobile ergonomics after the learning loop and import/export are stable.
 
 ## Known Caveats
 
 - `docs/PROJECT_SPEC.md` was referenced in `AGENTS.md`, but it was not present in the workspace during this session.
 - A `.docx` planning document exists at the project root.
-- The current vocabulary is still a small sample dataset, not the full Goethe A1/A2 list.
+- Most generated A-series entries currently have placeholder Korean glosses and `needs-review` status.
+- Generated A-series entries use extracted headwords/display forms only; official PDF examples were not copied into the seed.
 - Browser verification answers were submitted during testing, so the local browser profile may show increased counts for a few sample words.

@@ -3,13 +3,12 @@ import { db, getAppSettings, seedAppData } from "../db/appDb";
 import { SLOW_PLAYBACK_RATE_MULTIPLIER, speakGerman } from "../lib/speech";
 import type {
   AppSettingsRecord,
+  LevelFilter,
   PartOfSpeech,
   StudyState,
   Vocab,
-  VocabLevel,
 } from "../types";
 
-type LevelFilter = VocabLevel | "A1+A2";
 type PartOfSpeechFilter = PartOfSpeech | "all";
 
 export function VocabularyPage() {
@@ -71,8 +70,7 @@ export function VocabularyPage() {
     const normalizedQuery = query.trim().toLocaleLowerCase("de-DE");
 
     return vocabs.filter((vocab) => {
-      const matchesLevel =
-        levelFilter === "A1+A2" || vocab.level === levelFilter;
+      const matchesLevel = matchesLevelFilter(vocab, levelFilter);
       const matchesPartOfSpeech =
         partOfSpeechFilter === "all" ||
         vocab.partOfSpeech === partOfSpeechFilter;
@@ -108,7 +106,7 @@ export function VocabularyPage() {
       <div className="page-heading">
         <div>
           <p className="eyebrow">Vocabulary</p>
-          <h2>A1/A2 sample words</h2>
+          <h2>A-series words</h2>
         </div>
         <p className="word-count">
           {filteredVocabs.length} / {vocabs.length} words
@@ -138,9 +136,14 @@ export function VocabularyPage() {
                   setLevelFilter(event.target.value as LevelFilter)
                 }
               >
+                <option value="all">All</option>
                 <option value="A1+A2">A1+A2</option>
                 <option value="A1">A1</option>
                 <option value="A2">A2</option>
+                <option value="B1">B1</option>
+                <option value="B2">B2</option>
+                <option value="C1">C1</option>
+                <option value="C2">C2</option>
               </select>
             </label>
             <label className="field compact">
@@ -202,6 +205,9 @@ export function VocabularyPage() {
                     </div>
                     <div className="vocab-meta">
                       {vocab.partOfSpeech && <span>{vocab.partOfSpeech}</span>}
+                      {vocab.translationStatus === "needs-review" && (
+                        <span>translation needed</span>
+                      )}
                       {studyState && (
                         <span>
                           seen {studyState.seenCount} / box {studyState.box}
@@ -224,5 +230,14 @@ export function VocabularyPage() {
         </>
       )}
     </section>
+  );
+}
+
+function matchesLevelFilter(vocab: Vocab, levelFilter: LevelFilter) {
+  return (
+    levelFilter === "all" ||
+    (levelFilter === "A1+A2" &&
+      (vocab.level === "A1" || vocab.level === "A2")) ||
+    vocab.level === levelFilter
   );
 }

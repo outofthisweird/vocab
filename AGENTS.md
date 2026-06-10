@@ -32,6 +32,7 @@ At the start of every development session, read `DEVELOPMENT_LOG.md` first.
 Use it to understand what has already been built, what was verified, known caveats, and the recommended next work.
 After reading it, continue from the next unfinished item without asking the user to restate prior context unless the log is missing or contradictory.
 Update `DEVELOPMENT_LOG.md` whenever meaningful development work is completed, verified, or intentionally deferred.
+At the end of every development session, commit meaningful completed changes and always push the current branch to GitHub.
 
 Implement one phase at a time.
 After each phase, verify that the app runs locally and that data persists after refresh.

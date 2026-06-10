@@ -1,6 +1,6 @@
 # GerGer Development Log
 
-Last updated: 2026-06-11 02:20 KST
+Last updated: 2026-06-11 02:31 KST
 
 ## Project Summary
 
@@ -87,12 +87,16 @@ Added:
 - `tests/speech.test.ts`
 
 Changed:
+- `AGENTS.md`
 - `src/db/appDb.ts`
 - `src/pages/VocabularyPage.tsx`
 - `src/routes/AppRoutes.tsx`
 - `src/App.tsx`
 - `src/App.css`
 - `package.json`
+
+Recent documentation update:
+- Added a project instruction that every development session should end by committing meaningful completed changes and pushing the current branch to GitHub.
 
 ## Verification Performed
 
@@ -103,6 +107,10 @@ node --experimental-strip-types --test tests/*.test.ts
 node_modules/.bin/tsc -b
 node_modules/.bin/vite build
 ```
+
+Documentation-only change on 2026-06-11:
+- Updated `AGENTS.md` with the end-of-session commit and push rule.
+- App tests were not rerun because no application code changed.
 
 Browser verification performed at:
 

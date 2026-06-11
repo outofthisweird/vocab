@@ -1,6 +1,6 @@
 # GerGer Development Log
 
-Last updated: 2026-06-11 13:24 KST
+Last updated: 2026-06-11 13:42 KST
 
 ## Project Summary
 
@@ -137,6 +137,11 @@ Recent quality metadata update:
 - Test selection now uses quality gates so unsafe listening items and suffix-inferred/fallback glosses are excluded from the relevant quiz pools.
 - Quality data check result: `{"total":1852,"qualityMissing":0,"articleMissing":139,"rawPlural":638,"ttsCleanup":102,"boundForm":46,"ruleInferred":17,"translationNeedsReview":0}`.
 
+Recent test practice update:
+- Added a question count selector on the test setup screen with 10, 20, and 30 question options.
+- Changed test session word selection so eligible vocab pools are shuffled before limiting and the final session order is shuffled again.
+- Removed the alphabetical display fallback from test ordering so new sessions no longer leak the IndexedDB `display` sort order into practice.
+
 ## Verification Performed
 
 Commands that passed:
@@ -195,6 +200,15 @@ Browser verification for the 2026-06-11 13:24 KST quality update:
 - Confirmed unsafe TTS buttons are disabled for cleanup items.
 - Refreshed the page and confirmed the 1,852-word count and quality badges persisted after refresh.
 - Saved a verification screenshot at `/private/tmp/gerger-vocab-quality.png`.
+
+Browser verification for the 2026-06-11 13:42 KST test practice update:
+- Started `node_modules/.bin/vite --host 127.0.0.1` with elevated approval after sandbox blocked local binding.
+- Vite used `http://127.0.0.1:5174/` because port 5173 was already in use.
+- Opened `http://127.0.0.1:5174/test`.
+- Confirmed the test setup screen shows a `Questions` selector with 10, 20, and 30 options.
+- Selected 20 questions, started a session, and confirmed progress showed `1 / 20`.
+- Reloaded and started another 20-question session; the first prompt changed from `scheinen, scheint` to `studieren`, confirming the visible alphabetical order is no longer reused.
+- Saved a verification screenshot at `/private/tmp/gerger-test-question-count.png`.
 
 ## Environment Notes
 

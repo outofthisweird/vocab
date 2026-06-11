@@ -44,6 +44,9 @@ const TEST_MODES: Array<{ value: TestMode; label: string }> = [
   { value: "review-wrong", label: "Review" },
 ];
 
+const QUESTION_COUNT_OPTIONS = [10, 20, 30] as const;
+type QuestionCountOption = (typeof QUESTION_COUNT_OPTIONS)[number];
+
 export function TestPage() {
   const [vocabs, setVocabs] = useState<Vocab[]>([]);
   const [studyStates, setStudyStates] = useState<Record<string, StudyState>>(
@@ -52,6 +55,7 @@ export function TestPage() {
   const [settings, setSettings] = useState<AppSettingsRecord | null>(null);
   const [mode, setMode] = useState<TestMode>("de-to-kr");
   const [levelFilter, setLevelFilter] = useState<LevelFilter>("A1+A2");
+  const [questionCount, setQuestionCount] = useState<QuestionCountOption>(10);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [session, setSession] = useState<TestSession | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -157,7 +161,7 @@ export function TestPage() {
       studyStates,
       mode,
       levelFilter,
-      settings,
+      questionCount,
     );
 
     if (selectedVocabs.length === 0) {
@@ -303,7 +307,7 @@ export function TestPage() {
             ))}
           </div>
 
-          <div className="vocab-toolbar">
+          <div className="vocab-toolbar test-controls">
             <label className="field compact">
               <span>Level</span>
               <select
@@ -320,6 +324,21 @@ export function TestPage() {
                 <option value="B2">B2</option>
                 <option value="C1">C1</option>
                 <option value="C2">C2</option>
+              </select>
+            </label>
+            <label className="field compact">
+              <span>Questions</span>
+              <select
+                value={questionCount}
+                onChange={(event) =>
+                  setQuestionCount(Number(event.target.value) as QuestionCountOption)
+                }
+              >
+                {QUESTION_COUNT_OPTIONS.map((count) => (
+                  <option key={count} value={count}>
+                    {count}
+                  </option>
+                ))}
               </select>
             </label>
             <button className="primary-button" onClick={handleStartSession}>
@@ -457,7 +476,7 @@ function selectVocabsForMode(
   studyStates: Record<string, StudyState>,
   mode: TestMode,
   levelFilter: LevelFilter,
-  settings: AppSettingsRecord,
+  questionLimit: number,
 ) {
   const now = Date.now();
   const eligibleVocabs = vocabs.filter((vocab) => {
@@ -487,15 +506,7 @@ function selectVocabsForMode(
     pool = dueWrongVocabs.length > 0 ? dueWrongVocabs : wrongVocabs;
   }
 
-  const limit =
-    mode === "learn-new"
-      ? settings.dailyNewWordCount
-      : mode === "review-wrong"
-        ? settings.dailyReviewCount
-        : 10;
-
-  return pool
-    .slice()
+  const prioritizedPool = shuffleItems(pool)
     .sort((left, right) => {
       const leftState = studyStates[left.id];
       const rightState = studyStates[right.id];
@@ -508,11 +519,11 @@ function selectVocabsForMode(
       }
 
       return (
-        (leftState?.seenCount ?? 0) - (rightState?.seenCount ?? 0) ||
-        left.display.localeCompare(right.display, "de-DE")
+        (leftState?.seenCount ?? 0) - (rightState?.seenCount ?? 0)
       );
-    })
-    .slice(0, limit);
+    });
+
+  return shuffleItems(prioritizedPool.slice(0, questionLimit));
 }
 
 function matchesLevelFilter(vocab: Vocab, levelFilter: LevelFilter) {
@@ -616,6 +627,20 @@ function getReadyAnswerTypes(vocab: Vocab): AnswerType[] {
   return (["meaning", "spelling", "article", "listening"] as AnswerType[]).filter(
     (answerType) => isVocabReadyForAnswerType(vocab, answerType),
   );
+}
+
+function shuffleItems<T>(items: T[]) {
+  const shuffled = items.slice();
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [
+      shuffled[swapIndex],
+      shuffled[index],
+    ];
+  }
+
+  return shuffled;
 }
 
 function createSessionId() {

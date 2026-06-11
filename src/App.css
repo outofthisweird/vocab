@@ -284,6 +284,14 @@
   background: #e8f3f7;
 }
 
+.test-controls {
+  grid-template-columns:
+    minmax(160px, 1fr)
+    minmax(130px, 150px)
+    minmax(130px, 150px)
+    auto;
+}
+
 .test-card,
 .summary-panel {
   display: grid;

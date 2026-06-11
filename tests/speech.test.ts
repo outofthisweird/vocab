@@ -3,6 +3,7 @@ import { test } from "node:test";
 import { aSeriesVocabulary } from "../src/data/aSeriesVocabulary.ts";
 import {
   resolveGermanSpeechRate,
+  resolveGermanVoice,
   SLOW_PLAYBACK_RATE_MULTIPLIER,
 } from "../src/lib/speech.ts";
 
@@ -26,3 +27,41 @@ test("plays half speed from the adjusted base speech rate", () => {
     0.35,
   );
 });
+
+test("prefers a female German voice for feminine nouns", () => {
+  const feminineNoun = aSeriesVocabulary.find(
+    (vocab) => vocab.partOfSpeech === "noun" && vocab.article === "die",
+  )!;
+
+  assert.equal(
+    resolveGermanVoice(feminineNoun, [
+      createVoice("Markus", "de-DE"),
+      createVoice("Anna", "de-DE"),
+    ])?.name,
+    "Anna",
+  );
+});
+
+test("prefers a male German voice for masculine, neuter, and article-less words", () => {
+  const articleLessWord = aSeriesVocabulary.find(
+    (vocab) => vocab.partOfSpeech !== "noun",
+  )!;
+
+  assert.equal(
+    resolveGermanVoice(articleLessWord, [
+      createVoice("Anna", "de-DE"),
+      createVoice("Markus", "de-DE"),
+    ])?.name,
+    "Markus",
+  );
+});
+
+function createVoice(name: string, lang: string) {
+  return {
+    default: false,
+    lang,
+    localService: true,
+    name,
+    voiceURI: name,
+  } as SpeechSynthesisVoice;
+}

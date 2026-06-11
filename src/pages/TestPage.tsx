@@ -279,6 +279,10 @@ export function TestPage() {
     }
   }
 
+  const canShowPronunciationControls = currentQuestion
+    ? shouldShowPronunciationControls(currentQuestion)
+    : false;
+
   return (
     <section className="test-page">
       <div className="page-heading">
@@ -362,8 +366,15 @@ export function TestPage() {
           <div className="prompt-block">
             <p className="eyebrow">{currentQuestion.label}</p>
             <h3>{currentQuestion.prompt}</h3>
-            {currentQuestion.needsAudio && (
-              <div className="audio-controls" aria-label="Listening controls">
+            {canShowPronunciationControls && (
+              <div
+                className="audio-controls"
+                aria-label={
+                  currentQuestion.needsAudio
+                    ? "Listening controls"
+                    : "Pronunciation controls"
+                }
+              >
                 <button
                   className="secondary-button"
                   onClick={() => handleSpeak()}
@@ -626,6 +637,15 @@ function getAnswerType(
 function getReadyAnswerTypes(vocab: Vocab): AnswerType[] {
   return (["meaning", "spelling", "article", "listening"] as AnswerType[]).filter(
     (answerType) => isVocabReadyForAnswerType(vocab, answerType),
+  );
+}
+
+function shouldShowPronunciationControls(question: Question) {
+  return (
+    isVocabReadyForAnswerType(question.vocab, "listening") &&
+    (question.needsAudio ||
+      question.answerType === "meaning" ||
+      question.answerType === "article")
   );
 }
 

@@ -1,6 +1,6 @@
 # GerGer Development Log
 
-Last updated: 2026-06-11 16:51 KST
+Last updated: 2026-06-11 17:20 KST
 
 ## Project Summary
 
@@ -172,20 +172,27 @@ Recent level card study update:
 - Added `src/lib/studySelection.ts` with shuffle-before-limit and final-shuffle behavior, ignored-word exclusion, level filtering, New/Due/Weak/All pool selection, and weak-word prioritization by wrong count, difficulty, and low box.
 - Added `tests/studySelection.test.ts` covering CEFR filters, new/due/weak/all pool behavior, ignored-word exclusion, and limits.
 
+Recent quiz pronunciation update:
+- Added pronunciation controls to regular word quiz prompts when the German word is already visible, including DE -> KR meaning questions and article questions.
+- Kept KR -> DE spelling questions from showing pronunciation controls because playback would reveal the German answer.
+- Reused the existing normal and 0.5x playback controls in quiz prompts.
+- Updated local Web Speech voice selection so `die` nouns prefer a German female voice when the browser exposes one; masculine nouns, neuter nouns, and article-less words prefer a German male voice when available.
+- Added speech unit tests for feminine-vs-male/default voice preference.
+
 ## Verification Performed
 
 Commands that passed:
 
 ```sh
-node --experimental-strip-types --test tests/*.test.ts
-node_modules/.bin/tsc -b
-node_modules/.bin/vite build
+/Users/juna/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --experimental-strip-types --test tests/*.test.ts
+/Users/juna/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node node_modules/typescript/bin/tsc -b
+/Users/juna/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node node_modules/vite/bin/vite.js build
 ```
 
 Latest verification result:
 
 ```text
-23 tests passed
+25 tests passed
 TypeScript build passed
 Vite production build passed
 ```
@@ -205,16 +212,16 @@ Result:
 Browser verification performed at:
 
 ```text
-http://127.0.0.1:5175/
+http://127.0.0.1:5174/
 ```
 
 Confirmed in the browser:
-- Vocabulary list loads 1,852 A-series words from IndexedDB.
+- Vocabulary list loads 1,378 A-series words from IndexedDB.
 - Vocabulary rows show normal and 0.5x pronunciation controls.
+- Test setup loads with 1,378 due words.
+- Starting the default DE -> KR quiz shows normal and 0.5x pronunciation controls under the visible German prompt.
+- Refreshing the Test page reloads persisted IndexedDB data and still shows 1,378 due words.
 - B1/B2/C1/C2 filter options are visible for future expansion.
-- Generated entries marked `needs-review` show `translation needed`.
-- The 1,852-word count persists after refresh.
-- Browser console had no warnings or errors during the final check.
 
 Browser verification caveat for the 2026-06-11 03:08 KST dataset update:
 - Attempted to start `node_modules/.bin/vite --host 127.0.0.1`.

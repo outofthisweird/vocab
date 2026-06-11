@@ -13,6 +13,7 @@ export default function App() {
           </div>
           <nav aria-label="Primary navigation">
             <NavLink to="/vocabulary">Vocabulary</NavLink>
+            <NavLink to="/study">Study</NavLink>
             <NavLink to="/test">Test</NavLink>
           </nav>
         </header>

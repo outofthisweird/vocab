@@ -1,6 +1,6 @@
 # GerGer Development Log
 
-Last updated: 2026-06-11 14:04 KST
+Last updated: 2026-06-11 16:51 KST
 
 ## Project Summary
 
@@ -80,6 +80,13 @@ Completed from the project phase order:
    - Correct answers advance the box up to 6.
    - Review mode prioritizes wrong and due words.
 
+8. Level-based study cards
+   - `src/pages/StudyPage.tsx` adds a `/study` screen for card-based learning.
+   - Study pools support New, Due, Weak, and All with level filters and 10/20/30 card session sizes.
+   - Cards show German or Korean first based on `settings.ui.showKoreanFirst`, reveal details on flip, and expose normal/0.5x local Web Speech playback when TTS quality is safe.
+   - Self-rating with Know/Again updates existing `StudyState` through `applyAnswerToStudyState(..., "manual", now)`, so card study feeds the same review scheduling loop as tests.
+   - `src/lib/studySelection.ts` contains unit-tested pool selection and prioritization logic.
+
 Not completed yet:
 - Import/export
 - Human review pass for generated A1/A2 draft Korean glosses
@@ -97,10 +104,13 @@ Added:
 - `src/lib/reviewScheduling.ts`
 - `src/lib/speech.ts`
 - `src/lib/vocabQuality.ts`
+- `src/lib/studySelection.ts`
+- `src/pages/StudyPage.tsx`
 - `tests/aSeriesVocabulary.test.ts`
 - `tests/answerChecking.test.ts`
 - `tests/reviewScheduling.test.ts`
 - `tests/speech.test.ts`
+- `tests/studySelection.test.ts`
 
 Changed:
 - `AGENTS.md`
@@ -108,6 +118,7 @@ Changed:
 - `src/db/appDb.ts`
 - `src/pages/VocabularyPage.tsx`
 - `src/pages/TestPage.tsx`
+- `src/pages/StudyPage.tsx`
 - `src/routes/AppRoutes.tsx`
 - `src/App.tsx`
 - `src/App.css`
@@ -154,6 +165,13 @@ Recent A-series dedupe update:
 - Added seeding cleanup so stale A-series vocab and study-state rows removed by the dedupe pass are deleted from existing IndexedDB installs.
 - Added regression tests for cross-level deduplication and for preserving true homographs with different parts of speech.
 
+Recent level card study update:
+- Added Study navigation and `/study` route.
+- Added a level-based card learning page with New, Due, Weak, and All pools plus 10/20/30 card counts.
+- Study cards support flip-to-reveal, local German TTS controls, level/part/article/plural/example metadata, and persisted Know/Again self-ratings.
+- Added `src/lib/studySelection.ts` with shuffle-before-limit and final-shuffle behavior, ignored-word exclusion, level filtering, New/Due/Weak/All pool selection, and weak-word prioritization by wrong count, difficulty, and low box.
+- Added `tests/studySelection.test.ts` covering CEFR filters, new/due/weak/all pool behavior, ignored-word exclusion, and limits.
+
 ## Verification Performed
 
 Commands that passed:
@@ -167,7 +185,7 @@ node_modules/.bin/vite build
 Latest verification result:
 
 ```text
-18 tests passed
+23 tests passed
 TypeScript build passed
 Vite production build passed
 ```
@@ -231,16 +249,30 @@ Browser verification for the 2026-06-11 14:04 KST A-series dedupe update:
 - Browser console had no warnings or errors during the final check.
 - Saved a verification screenshot at `/private/tmp/gerger-a-series-dedupe.png`.
 
+Browser verification for the 2026-06-11 16:51 KST level card study update:
+- Started `node_modules/vite/bin/vite.js --host 127.0.0.1` with elevated approval after sandbox blocked local binding.
+- Opened `http://127.0.0.1:5173/study` in Safari.
+- Confirmed the Study navigation item is active and the `/study` screen renders `Level cards`.
+- Confirmed the setup controls are visible: New, Due, Weak, All pools; Level selector; Cards selector; Start button.
+- Confirmed the header summary showed local IndexedDB-backed counts (`1273 new / 1357 due` in the current browser profile).
+- Confirmed `http://127.0.0.1:5173/study`, `/vocabulary`, and `/test` all returned HTTP 200 from the dev server.
+- Browser automation caveat: Computer Use click actions did not remain active for Safari, and Safari blocked AppleScript page JavaScript because `Allow JavaScript from Apple Events` is disabled. The full click-through card rating flow was therefore covered by code review, unit tests, TypeScript, and production build rather than automated browser clicks.
+
 ## Environment Notes
 
-- The Codex shell had `node` available at `/Applications/Codex.app/Contents/Resources/node`.
-- `npm`, `npx`, `pnpm`, and `yarn` were not available in PATH during the session.
-- Use local binaries directly when needed, for example:
+- `node`, `npm`, `npx`, `pnpm`, and `yarn` may not be available in PATH during Codex sessions.
+- In the 2026-06-11 16:51 KST session, Codex workspace dependencies exposed Node at:
 
 ```sh
-node_modules/.bin/tsc -b
-node_modules/.bin/vite build
-node_modules/.bin/vite --host 127.0.0.1
+/Users/juna/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node
+```
+
+- Use the bundled Node with local package entrypoints when needed, for example:
+
+```sh
+/Users/juna/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node node_modules/typescript/bin/tsc -b
+/Users/juna/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node node_modules/vite/bin/vite.js build
+/Users/juna/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node node_modules/vite/bin/vite.js --host 127.0.0.1
 ```
 
 - Starting the Vite dev server required elevated approval because the sandbox blocked binding to `127.0.0.1`.
@@ -251,7 +283,7 @@ No dev server is intentionally left running.
 The final browser verification used:
 
 ```text
-http://127.0.0.1:5175/
+http://127.0.0.1:5173/study
 ```
 
 If a future session starts fresh, check whether a server is already running before starting another one.

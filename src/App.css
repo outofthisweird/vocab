@@ -58,7 +58,8 @@
 }
 
 .vocabulary-page,
-.test-page {
+.test-page,
+.study-page {
   display: grid;
   gap: 20px;
 }
@@ -266,10 +267,15 @@
   gap: 16px;
 }
 
-.mode-grid {
+.mode-grid,
+.pool-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 8px;
+}
+
+.pool-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .mode {
@@ -288,6 +294,19 @@
   grid-template-columns:
     minmax(160px, 1fr)
     minmax(130px, 150px)
+    minmax(130px, 150px)
+    auto;
+}
+
+.study-setup,
+.study-card {
+  display: grid;
+  gap: 16px;
+}
+
+.study-controls {
+  grid-template-columns:
+    minmax(160px, 1fr)
     minmax(130px, 150px)
     auto;
 }
@@ -316,6 +335,27 @@
   gap: 12px;
 }
 
+.flashcard {
+  display: grid;
+  gap: 18px;
+  min-height: 320px;
+  border: 1px solid #ddd9cf;
+  border-radius: 8px;
+  padding: 22px;
+  background: #fffdf8;
+}
+
+.flashcard.flipped {
+  border-color: #b8c2a3;
+}
+
+.flashcard-front,
+.flashcard-back {
+  display: grid;
+  align-content: center;
+  gap: 14px;
+}
+
 .audio-controls {
   display: flex;
   flex-wrap: wrap;
@@ -323,16 +363,36 @@
 }
 
 .prompt-block h3,
+.flashcard h3,
 .summary-panel h3,
 .result-panel p,
 .result-panel span {
   margin: 0;
 }
 
-.prompt-block h3 {
+.prompt-block h3,
+.flashcard h3 {
   color: #1b1d1a;
   font-size: 1.8rem;
   line-height: 1.2;
+}
+
+.study-answer {
+  margin: 0;
+  color: #394035;
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.study-wide-button {
+  justify-self: stretch;
+}
+
+.study-rating {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 }
 
 .answer-form {
@@ -396,7 +456,7 @@
 
   .app-header nav {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .app-header a {
@@ -408,7 +468,8 @@
     grid-template-columns: 1fr;
   }
 
-  .mode-grid {
+  .mode-grid,
+  .pool-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -417,7 +478,13 @@
     justify-content: space-between;
   }
 
-  .prompt-block h3 {
+  .prompt-block h3,
+  .flashcard h3 {
     font-size: 1.45rem;
+  }
+
+  .flashcard {
+    min-height: 300px;
+    padding: 18px;
   }
 }

@@ -10,6 +10,7 @@ import type {
 } from "../types";
 
 const A_SERIES_DATASET_ID = "goethe-a-series-v1";
+const A_SERIES_DATASET_VERSION = "1.1.1";
 
 export const DEFAULT_SETTINGS: AppSettingsRecord = {
   id: "default",
@@ -71,29 +72,23 @@ export async function seedASeriesVocabulary() {
     db.datasetMeta,
     async () => {
       const installedDataset = await db.datasetMeta.get(A_SERIES_DATASET_ID);
+      const shouldRefreshDataset =
+        !installedDataset ||
+        installedDataset.version !== A_SERIES_DATASET_VERSION ||
+        installedDataset.vocabCount !== aSeriesVocabulary.length;
 
-      if (installedDataset) {
+      if (!shouldRefreshDataset) {
         return;
       }
 
-      const existingVocabs = await db.vocabs.toArray();
-      const existingIds = new Set(existingVocabs.map((vocab) => vocab.id));
-      const existingVocabKeys = new Set(existingVocabs.map(createVocabKey));
       const existingStudyStateIds = new Set(
         (await db.studyStates.toCollection().primaryKeys()).map(String),
       );
-      const missingVocabs = aSeriesVocabulary.filter(
-        (vocab) =>
-          !existingIds.has(vocab.id) &&
-          !existingVocabKeys.has(createVocabKey(vocab)),
-      );
-      const missingStudyStates = missingVocabs
+      const missingStudyStates = aSeriesVocabulary
         .filter((vocab) => !existingStudyStateIds.has(vocab.id))
         .map((vocab) => createInitialStudyState(vocab.id));
 
-      if (missingVocabs.length > 0) {
-        await db.vocabs.bulkAdd(missingVocabs);
-      }
+      await db.vocabs.bulkPut(aSeriesVocabulary);
 
       if (missingStudyStates.length > 0) {
         await db.studyStates.bulkAdd(missingStudyStates);
@@ -102,9 +97,9 @@ export async function seedASeriesVocabulary() {
       await db.datasetMeta.put({
         id: A_SERIES_DATASET_ID,
         name: "Goethe A-series vocabulary seed",
-        version: "1.0.0",
+        version: A_SERIES_DATASET_VERSION,
         vocabCount: aSeriesVocabulary.length,
-        installedAt: Date.now(),
+        installedAt: installedDataset?.installedAt ?? Date.now(),
         updatedAt: Date.now(),
       });
     },
@@ -136,21 +131,4 @@ export function createInitialStudyState(vocabId: string): StudyState {
     isFavorite: false,
     isIgnored: false,
   };
-}
-
-function createVocabKey(vocab: Pick<Vocab, "level" | "source" | "lemma">) {
-  return `${vocab.level}:${vocab.source}:${slugGerman(vocab.lemma)}`;
-}
-
-function slugGerman(value: string) {
-  return (
-    value
-      .toLocaleLowerCase("de-DE")
-      .replace(/ä/gu, "ae")
-      .replace(/ö/gu, "oe")
-      .replace(/ü/gu, "ue")
-      .replace(/ß/gu, "ss")
-      .replace(/[^a-z0-9]+/gu, "-")
-      .replace(/^-|-$/gu, "") || "entry"
-  );
 }

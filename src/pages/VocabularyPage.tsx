@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { db, getAppSettings, seedAppData } from "../db/appDb";
 import { SLOW_PLAYBACK_RATE_MULTIPLIER, speakGerman } from "../lib/speech";
+import { resolveVocabQuality } from "../lib/vocabQuality";
 import type {
   AppSettingsRecord,
   LevelFilter,
@@ -82,6 +83,7 @@ export function VocabularyPage() {
         vocab.germanExample,
         vocab.koreanExampleMeaning,
         ...(vocab.tags ?? []),
+        ...(vocab.quality?.reviewReasons ?? []),
       ]
         .filter(Boolean)
         .join(" ")
@@ -173,6 +175,8 @@ export function VocabularyPage() {
             <ul className="vocab-list">
               {filteredVocabs.map((vocab) => {
                 const studyState = studyStates[vocab.id];
+                const quality = resolveVocabQuality(vocab);
+                const canSpeak = quality.tts === "ready";
 
                 return (
                   <li className="vocab-row" key={vocab.id}>
@@ -185,6 +189,7 @@ export function VocabularyPage() {
                         <button
                           aria-label={`${vocab.lemma} pronunciation`}
                           className="icon-button"
+                          disabled={!canSpeak}
                           onClick={() => handleSpeak(vocab)}
                           type="button"
                         >
@@ -193,6 +198,7 @@ export function VocabularyPage() {
                         <button
                           aria-label={`${vocab.lemma} pronunciation at half speed`}
                           className="icon-button rate-button"
+                          disabled={!canSpeak}
                           onClick={() =>
                             handleSpeak(vocab, SLOW_PLAYBACK_RATE_MULTIPLIER)
                           }
@@ -205,8 +211,22 @@ export function VocabularyPage() {
                     </div>
                     <div className="vocab-meta">
                       {vocab.partOfSpeech && <span>{vocab.partOfSpeech}</span>}
-                      {vocab.translationStatus === "needs-review" && (
+                      {quality.translation === "needs-review" && (
                         <span>translation needed</span>
+                      )}
+                      {quality.translation === "rule-inferred" && (
+                        <span>rule-inferred gloss</span>
+                      )}
+                      {quality.article === "missing" && (
+                        <span>article missing</span>
+                      )}
+                      {quality.plural === "raw" && <span>raw plural</span>}
+                      {quality.tts === "needs-cleanup" && (
+                        <span>tts cleanup</span>
+                      )}
+                      {(quality.entryKind === "bound-form" ||
+                        quality.entryKind === "needs-cleanup") && (
+                        <span>{quality.entryKind}</span>
                       )}
                       {studyState && (
                         <span>

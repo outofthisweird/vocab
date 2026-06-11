@@ -27,6 +27,35 @@ export type TranslationStatus =
   | "manual"
   | "needs-review";
 
+export type VocabQuality = {
+  translation:
+    | "llm-draft"
+    | "rule-inferred"
+    | "reviewed"
+    | "manual"
+    | "needs-review";
+  article: "present" | "missing" | "not-applicable" | "needs-review";
+  plural: "raw" | "verified" | "not-applicable";
+  tts: "ready" | "needs-cleanup";
+  entryKind:
+    | "word"
+    | "phrase"
+    | "bound-form"
+    | "variant"
+    | "grammar-note"
+    | "needs-cleanup";
+  partOfSpeechSource: "manual" | "rule-inferred";
+  partOfSpeechConfidence: "low" | "medium" | "high";
+  reviewReasons: Array<
+    | "translation-needs-review"
+    | "article-missing"
+    | "raw-plural"
+    | "entry-needs-cleanup"
+    | "tts-needs-cleanup"
+    | "part-of-speech-inferred"
+  >;
+};
+
 export type Vocab = {
   id: string;
   level: VocabLevel;
@@ -48,6 +77,7 @@ export type Vocab = {
     slowRate?: number;
   };
   translationStatus: TranslationStatus;
+  quality?: VocabQuality;
   createdAt: number;
   updatedAt: number;
 };

@@ -204,6 +204,8 @@
 }
 
 .primary-button:disabled,
+.icon-button:disabled,
+.secondary-button:disabled,
 .answer-option:disabled {
   cursor: not-allowed;
   opacity: 0.55;

@@ -15,6 +15,7 @@ import {
   isDueForReview,
 } from "../lib/reviewScheduling";
 import { SLOW_PLAYBACK_RATE_MULTIPLIER, speakGerman } from "../lib/speech";
+import { isVocabReadyForAnswerType } from "../lib/vocabQuality";
 import type {
   AppSettingsRecord,
   LevelFilter,
@@ -525,14 +526,22 @@ function matchesLevelFilter(vocab: Vocab, levelFilter: LevelFilter) {
 
 function canUseVocabForMode(vocab: Vocab, mode: TestMode) {
   if (mode === "article") {
-    return Boolean(vocab.article);
+    return isVocabReadyForAnswerType(vocab, "article");
   }
 
   if (mode === "listening-spelling") {
-    return true;
+    return isVocabReadyForAnswerType(vocab, "listening");
   }
 
-  return vocab.translationStatus !== "needs-review";
+  if (mode === "kr-to-de") {
+    return isVocabReadyForAnswerType(vocab, "spelling");
+  }
+
+  if (mode === "mixed") {
+    return getReadyAnswerTypes(vocab).length > 0;
+  }
+
+  return isVocabReadyForAnswerType(vocab, "meaning");
 }
 
 function createQuestion(vocab: Vocab, mode: TestMode, index: number): Question {
@@ -595,14 +604,18 @@ function getAnswerType(
   }
 
   if (mode === "mixed") {
-    const options: AnswerType[] = vocab.article
-      ? ["meaning", "spelling", "article", "listening"]
-      : ["meaning", "spelling", "listening"];
+    const options = getReadyAnswerTypes(vocab);
 
     return options[index % options.length];
   }
 
   return "meaning";
+}
+
+function getReadyAnswerTypes(vocab: Vocab): AnswerType[] {
+  return (["meaning", "spelling", "article", "listening"] as AnswerType[]).filter(
+    (answerType) => isVocabReadyForAnswerType(vocab, answerType),
+  );
 }
 
 function createSessionId() {

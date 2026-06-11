@@ -1,6 +1,6 @@
 # GerGer Development Log
 
-Last updated: 2026-06-11 13:42 KST
+Last updated: 2026-06-11 14:04 KST
 
 ## Project Summary
 
@@ -23,9 +23,10 @@ Completed from the project phase order:
    - Dexie database is defined in `src/db/appDb.ts`.
    - Tables exist for `vocabs`, `studyStates`, `testSessions`, `settings`, `datasetMeta`, and `importLogs`.
    - A-series vocabulary is seeded from `src/data/aSeriesVocabulary.ts`.
-   - The seed currently contains 1,852 A1/A2 entries:
+   - The seed currently contains 1,378 deduplicated A1/A2 entries:
      - The original 20 curated sample entries keep their Korean glosses and examples.
      - Generated Goethe A1/A2 headword entries now use draft Korean glosses and `translationStatus: "llm-draft"`.
+     - Cross-level duplicates with the same normalized lemma and part of speech are reduced to one preferred entry.
    - A-series entries now include `quality` metadata for translation, article, plural, TTS, entry kind, and inferred part-of-speech confidence.
    - Default app settings are seeded and loaded through `seedAppData()`, `seedDefaultSettings()`, and `getAppSettings()`.
 
@@ -142,6 +143,17 @@ Recent test practice update:
 - Changed test session word selection so eligible vocab pools are shuffled before limiting and the final session order is shuffled again.
 - Removed the alphabetical display fallback from test ordering so new sessions no longer leak the IndexedDB `display` sort order into practice.
 
+Recent A-series dedupe update:
+- Compared A1/A2 duplicate candidates by normalized German lemma plus part of speech so true homographs such as `morgen`/`Morgen` and `arm`/`Arm` are kept.
+- Preferred entries with manual/curated metadata, examples, reviewed/manual translations, stronger quality metadata, present articles/plurals, safer TTS, and fuller display forms; ties keep the lower CEFR level.
+- Reduced the seed from 1,852 entries to 1,378 entries:
+  - A1: 499 entries
+  - A2: 879 entries
+  - Remaining cross-level duplicates by lemma plus part of speech: 0
+- Bumped the A-series dataset version to `1.1.2`.
+- Added seeding cleanup so stale A-series vocab and study-state rows removed by the dedupe pass are deleted from existing IndexedDB installs.
+- Added regression tests for cross-level deduplication and for preserving true homographs with different parts of speech.
+
 ## Verification Performed
 
 Commands that passed:
@@ -155,7 +167,7 @@ node_modules/.bin/vite build
 Latest verification result:
 
 ```text
-16 tests passed
+18 tests passed
 TypeScript build passed
 Vite production build passed
 ```
@@ -209,6 +221,15 @@ Browser verification for the 2026-06-11 13:42 KST test practice update:
 - Selected 20 questions, started a session, and confirmed progress showed `1 / 20`.
 - Reloaded and started another 20-question session; the first prompt changed from `scheinen, scheint` to `studieren`, confirming the visible alphabetical order is no longer reused.
 - Saved a verification screenshot at `/private/tmp/gerger-test-question-count.png`.
+
+Browser verification for the 2026-06-11 14:04 KST A-series dedupe update:
+- Started `node_modules/.bin/vite --host 127.0.0.1` with elevated approval after sandbox blocked local binding.
+- Vite used `http://127.0.0.1:5174/` because port 5173 was already in use.
+- Opened `http://127.0.0.1:5174/vocabulary`.
+- Confirmed the vocabulary page loads `1378 / 1378 words`.
+- Refreshed the page and confirmed `1378 / 1378 words` persisted.
+- Browser console had no warnings or errors during the final check.
+- Saved a verification screenshot at `/private/tmp/gerger-a-series-dedupe.png`.
 
 ## Environment Notes
 

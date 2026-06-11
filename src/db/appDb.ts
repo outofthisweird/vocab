@@ -10,7 +10,7 @@ import type {
 } from "../types";
 
 const A_SERIES_DATASET_ID = "goethe-a-series-v1";
-const A_SERIES_DATASET_VERSION = "1.1.1";
+const A_SERIES_DATASET_VERSION = "1.1.2";
 
 export const DEFAULT_SETTINGS: AppSettingsRecord = {
   id: "default",
@@ -87,11 +87,21 @@ export async function seedASeriesVocabulary() {
       const missingStudyStates = aSeriesVocabulary
         .filter((vocab) => !existingStudyStateIds.has(vocab.id))
         .map((vocab) => createInitialStudyState(vocab.id));
+      const currentVocabIds = new Set(aSeriesVocabulary.map((vocab) => vocab.id));
+      const staleASeriesVocabs = (
+        await db.vocabs.where("source").anyOf("goethe-a1", "goethe-a2").toArray()
+      ).filter((vocab) => !currentVocabIds.has(vocab.id));
+      const staleASeriesVocabIds = staleASeriesVocabs.map((vocab) => vocab.id);
 
       await db.vocabs.bulkPut(aSeriesVocabulary);
 
       if (missingStudyStates.length > 0) {
         await db.studyStates.bulkAdd(missingStudyStates);
+      }
+
+      if (staleASeriesVocabIds.length > 0) {
+        await db.vocabs.bulkDelete(staleASeriesVocabIds);
+        await db.studyStates.bulkDelete(staleASeriesVocabIds);
       }
 
       await db.datasetMeta.put({

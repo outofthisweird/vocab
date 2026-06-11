@@ -3576,12 +3576,15 @@ const generatedAEntries = generatedAEntryTuples
   .map(tupleToVocab)
   .filter((vocab) => !curatedKeys.has(createVocabKey(vocab)));
 
-export const aSeriesVocabulary: Vocab[] = [
+const rawASeriesVocabulary: Vocab[] = [
   ...curatedA1A2Vocabulary.map((vocab) =>
     withVocabQuality(vocab, { partOfSpeechSource: "manual" }),
   ),
   ...generatedAEntries,
 ];
+
+export const aSeriesVocabulary: Vocab[] =
+  dedupeCrossLevelVocabulary(rawASeriesVocabulary);
 
 function tupleToVocab(tuple: GoetheSeedTuple): Vocab {
   const [level, lemma, display, article] = tuple;
@@ -3706,6 +3709,139 @@ function getGoetheSource(level: "A1" | "A2"): VocabSource {
 
 function createVocabKey(vocab: Pick<Vocab, "level" | "source" | "lemma">) {
   return `${vocab.level}:${vocab.source}:${slugGerman(vocab.lemma)}`;
+}
+
+function dedupeCrossLevelVocabulary(vocabs: Vocab[]) {
+  const groups = new Map<string, Vocab[]>();
+
+  for (const vocab of vocabs) {
+    const key = createDuplicateVocabKey(vocab);
+    groups.set(key, [...(groups.get(key) ?? []), vocab]);
+  }
+
+  const keepIds = new Set(vocabs.map((vocab) => vocab.id));
+
+  for (const group of groups.values()) {
+    const levels = new Set(group.map((vocab) => vocab.level));
+
+    if (group.length < 2 || levels.size < 2) {
+      continue;
+    }
+
+    const [preferred, ...duplicates] = [...group].sort(compareDuplicateVocab);
+
+    for (const duplicate of duplicates) {
+      if (duplicate.id !== preferred.id) {
+        keepIds.delete(duplicate.id);
+      }
+    }
+  }
+
+  return vocabs.filter((vocab) => keepIds.has(vocab.id));
+}
+
+function createDuplicateVocabKey(vocab: Pick<Vocab, "lemma" | "partOfSpeech">) {
+  return `${slugGerman(vocab.lemma)}:${vocab.partOfSpeech ?? "unknown"}`;
+}
+
+function compareDuplicateVocab(a: Vocab, b: Vocab) {
+  return (
+    scoreDuplicateCandidate(b) - scoreDuplicateCandidate(a) ||
+    compareLevel(a.level, b.level) ||
+    a.id.localeCompare(b.id, "de-DE")
+  );
+}
+
+function compareLevel(a: Vocab["level"], b: Vocab["level"]) {
+  const rank: Record<Vocab["level"], number> = {
+    A1: 1,
+    A2: 2,
+    B1: 3,
+    B2: 4,
+    C1: 5,
+    C2: 6,
+  };
+
+  return rank[a] - rank[b];
+}
+
+function scoreDuplicateCandidate(vocab: Vocab) {
+  let score = 0;
+
+  if (
+    vocab.translationStatus === "reviewed" ||
+    vocab.translationStatus === "manual"
+  ) {
+    score += 100;
+  }
+
+  if (vocab.quality?.partOfSpeechSource === "manual") {
+    score += 50;
+  }
+
+  if (vocab.germanExample) {
+    score += 30;
+  }
+
+  if (vocab.koreanExampleMeaning) {
+    score += 30;
+  }
+
+  if (vocab.koreanGlossAlt?.length) {
+    score += 10 + vocab.koreanGlossAlt.length;
+  }
+
+  if (vocab.quality?.translation === "reviewed") {
+    score += 20;
+  } else if (vocab.quality?.translation === "manual") {
+    score += 20;
+  } else if (vocab.quality?.translation === "llm-draft") {
+    score += 5;
+  } else if (vocab.quality?.translation === "rule-inferred") {
+    score -= 10;
+  }
+
+  if (vocab.article) {
+    score += 8;
+  }
+
+  if (vocab.plural) {
+    score += 6;
+  }
+
+  if (vocab.quality?.article === "present") {
+    score += 5;
+  }
+
+  if (vocab.quality?.plural === "verified") {
+    score += 5;
+  }
+
+  if (vocab.quality?.tts === "ready") {
+    score += 4;
+  }
+
+  if (vocab.quality?.entryKind === "word") {
+    score += 4;
+  } else if (vocab.quality?.entryKind === "phrase") {
+    score += 2;
+  } else if (
+    vocab.quality?.entryKind === "bound-form" ||
+    vocab.quality?.entryKind === "variant" ||
+    vocab.quality?.entryKind === "needs-cleanup"
+  ) {
+    score -= 20;
+  }
+
+  if (vocab.partOfSpeech) {
+    score += 3;
+  }
+
+  if (vocab.display.length > vocab.lemma.length) {
+    score += Math.min(8, vocab.display.length - vocab.lemma.length);
+  }
+
+  return score;
 }
 
 function inferPartOfSpeech(

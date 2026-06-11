@@ -1,6 +1,6 @@
 # GerGer Development Log
 
-Last updated: 2026-06-11 17:20 KST
+Last updated: 2026-06-12 KST
 
 ## Project Summary
 
@@ -177,7 +177,9 @@ Recent quiz pronunciation update:
 - Kept KR -> DE spelling questions from showing pronunciation controls because playback would reveal the German answer.
 - Reused the existing normal and 0.5x playback controls in quiz prompts.
 - Updated local Web Speech voice selection so `die` nouns prefer a German female voice when the browser exposes one; masculine nouns, neuter nouns, and article-less words prefer a German male voice when available.
+- Tightened the voice fallback so `der`/`das` nouns avoid known female German default voices when a non-female German voice is available.
 - Added speech unit tests for feminine-vs-male/default voice preference.
+- Added regression tests for masculine and neuter nouns avoiding a known female default voice fallback.
 
 ## Verification Performed
 
@@ -192,7 +194,7 @@ Commands that passed:
 Latest verification result:
 
 ```text
-25 tests passed
+27 tests passed
 TypeScript build passed
 Vite production build passed
 ```

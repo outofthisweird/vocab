@@ -56,9 +56,37 @@ test("prefers a male German voice for masculine, neuter, and article-less words"
   );
 });
 
-function createVoice(name: string, lang: string) {
+test("does not fall back to a known female default voice for masculine nouns", () => {
+  const masculineNoun = aSeriesVocabulary.find(
+    (vocab) => vocab.partOfSpeech === "noun" && vocab.article === "der",
+  )!;
+
+  assert.equal(
+    resolveGermanVoice(masculineNoun, [
+      createVoice("Anna", "de-DE", true),
+      createVoice("German Generic", "de-DE"),
+    ])?.name,
+    "German Generic",
+  );
+});
+
+test("does not fall back to a known female default voice for neuter nouns", () => {
+  const neuterNoun = aSeriesVocabulary.find(
+    (vocab) => vocab.partOfSpeech === "noun" && vocab.article === "das",
+  )!;
+
+  assert.equal(
+    resolveGermanVoice(neuterNoun, [
+      createVoice("Anna", "de-DE", true),
+      createVoice("German Generic", "de-DE"),
+    ])?.name,
+    "German Generic",
+  );
+});
+
+function createVoice(name: string, lang: string, isDefault = false) {
   return {
-    default: false,
+    default: isDefault,
     lang,
     localService: true,
     name,

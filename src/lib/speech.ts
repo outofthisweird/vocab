@@ -9,6 +9,48 @@ type GermanVoicePreference = "female" | "male";
 const SPEECH_RATE_STEP_DOWN = 0.05;
 const MIN_SPEECH_RATE = 0.1;
 const MAX_SPEECH_RATE = 2;
+const GERMAN_FEMALE_VOICE_MATCHERS = [
+  /\bfemale\b/,
+  /\bfrau\b/,
+  /\bwoman\b/,
+  /\bamala\b/,
+  /\banna\b/,
+  /\bflo\b/,
+  /\bgrandma\b/,
+  /\bhelena\b/,
+  /\bhedda\b/,
+  /\bkatja\b/,
+  /\blouisa\b/,
+  /\bmaja\b/,
+  /\bmarlene\b/,
+  /\bpetra\b/,
+  /\bsandy\b/,
+  /\bshelley\b/,
+  /\btanja\b/,
+  /\byvonne\b/,
+];
+const GERMAN_MALE_VOICE_MATCHERS = [
+  /\bmale\b/,
+  /\bmann\b/,
+  /\bman\b/,
+  /\bbernd\b/,
+  /\bconrad\b/,
+  /\bdaniel\b/,
+  /\beddy\b/,
+  /\bfelix\b/,
+  /\bflorian\b/,
+  /\bgrandpa\b/,
+  /\bhans\b/,
+  /\bkillian\b/,
+  /\bklaus\b/,
+  /\bmarkus\b/,
+  /\bmartin\b/,
+  /\bralf\b/,
+  /\breed\b/,
+  /\bstefan\b/,
+  /\bthomas\b/,
+  /\byannick\b/,
+];
 
 export const SLOW_PLAYBACK_RATE_MULTIPLIER = 0.5;
 
@@ -65,9 +107,15 @@ export function resolveGermanVoice(
   const germanVoices = voices.filter((voice) =>
     voice.lang.toLocaleLowerCase("en-US").startsWith("de"),
   );
+  const preference = getGermanVoicePreference(vocab);
+  const fallbackVoices = germanVoices.filter(
+    (voice) => !doesVoiceMatchGender(voice, getOppositePreference(preference)),
+  );
 
   return (
-    findVoiceByGender(germanVoices, getGermanVoicePreference(vocab)) ??
+    findVoiceByGender(germanVoices, preference) ??
+    fallbackVoices.find((voice) => voice.default) ??
+    fallbackVoices[0] ??
     germanVoices.find((voice) => voice.default) ??
     germanVoices[0]
   );
@@ -83,36 +131,22 @@ function findVoiceByGender(
   voices: SpeechSynthesisVoice[],
   preference: GermanVoicePreference,
 ) {
-  const nameMatchers =
+  return voices.find((voice) => doesVoiceMatchGender(voice, preference));
+}
+
+function doesVoiceMatchGender(
+  voice: SpeechSynthesisVoice,
+  preference: GermanVoicePreference,
+) {
+  const name = voice.name.toLocaleLowerCase("de-DE");
+  const matchers =
     preference === "female"
-      ? [
-          /\bfemale\b/,
-          /\bfrau\b/,
-          /\bwoman\b/,
-          /\banna\b/,
-          /\bkatja\b/,
-          /\bmarlene\b/,
-          /\bpetra\b/,
-          /\byvonne\b/,
-          /\bhelena\b/,
-          /\bsandy\b/,
-        ]
-      : [
-          /\bmale\b/,
-          /\bmann\b/,
-          /\bman\b/,
-          /\bmarkus\b/,
-          /\bklaus\b/,
-          /\bhans\b/,
-          /\bstefan\b/,
-          /\bthomas\b/,
-          /\bdaniel\b/,
-          /\byannick\b/,
-        ];
+      ? GERMAN_FEMALE_VOICE_MATCHERS
+      : GERMAN_MALE_VOICE_MATCHERS;
 
-  return voices.find((voice) => {
-    const name = voice.name.toLocaleLowerCase("de-DE");
+  return matchers.some((matcher) => matcher.test(name));
+}
 
-    return nameMatchers.some((matcher) => matcher.test(name));
-  });
+function getOppositePreference(preference: GermanVoicePreference) {
+  return preference === "female" ? "male" : "female";
 }
